@@ -5,7 +5,7 @@ describe("Shared", () => {
     describe("getTranslatableContent", () => {
         it('should return the translatableContent when the value contains all the params', () => {
             expect(getTranslatableContent("Page Header | Header about dolphins @@@ pageHeader"))
-                .toEqual({
+                .toMatchObject({
                     meaning: "Page Header",
                     description: "Header about dolphins",
                     id: "pageHeader"
@@ -13,7 +13,7 @@ describe("Shared", () => {
         });
         it('should return the translatableContent when the value contains the meaning and the id', () => {
             expect(getTranslatableContent("Page Header @@@ pageHeader"))
-                .toEqual({
+                .toMatchObject({
                     meaning: "Page Header",
                     description: "",
                     id: "pageHeader"
@@ -21,7 +21,7 @@ describe("Shared", () => {
         });
         it('should return the translatableContent when the value contains the description and the id', () => {
             expect(getTranslatableContent("| Header about dolphins @@@ pageHeader"))
-                .toEqual({
+                .toMatchObject({
                     meaning: "",
                     description: "Header about dolphins",
                     id: "pageHeader"
@@ -29,14 +29,14 @@ describe("Shared", () => {
         });
         it('should return the translatableContent when the value contains only the id', () => {
             expect(getTranslatableContent(" @@ pageHeader"))
-                .toEqual({
+                .toMatchObject({
                     meaning: "",
                     description: "",
                     id: "pageHeader"
                 });
 
             expect(getTranslatableContent("|@@ pageHeader"))
-                .toEqual({
+                .toMatchObject({
                     meaning: "",
                     description: "",
                     id: "pageHeader"
@@ -44,28 +44,28 @@ describe("Shared", () => {
         });
         it('should return empty when the value is not in the correct format', () => {
             expect(getTranslatableContent("pageHeader"))
-                .toEqual({
+                .toMatchObject({
                     meaning: "",
                     description: "",
                     id: ""
                 });
 
             expect(getTranslatableContent("@"))
-                .toEqual({
+                .toMatchObject({
                     meaning: "",
                     description: "",
                     id: ""
                 });
 
             expect(getTranslatableContent("|"))
-                .toEqual({
+                .toMatchObject({
                     meaning: "",
                     description: "",
                     id: ""
                 });
 
             expect(getTranslatableContent("|"))
-                .toEqual({
+                .toMatchObject({
                     meaning: "",
                     description: "",
                     id: ""
@@ -73,7 +73,7 @@ describe("Shared", () => {
         });
         it('should return the translatableContent when the value is empty', () => {
             expect(getTranslatableContent(""))
-                .toEqual({
+                .toMatchObject({
                     meaning: "",
                     description: "",
                     id: ""
@@ -121,7 +121,7 @@ describe("Shared", () => {
             expect(getMessageById("pageFooter", {
                 current: "en",
                 messages 
-            })).toEqual(messages.en.pageFooter);
+            })).toMatchObject(messages.en.pageFooter);
 
         });
     });
