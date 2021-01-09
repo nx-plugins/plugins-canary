@@ -1,0 +1,41 @@
+21:55:22 (21480) DEBUG BroadcastReporter Broadcasting to reporters ["html"]
+21:55:22 (21480) INFO InputFileResolver Found 5 of 17 file(s) to be mutated.
+21:55:22 (21480) DEBUG InputFileResolver All input files: [
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\babel.config.json",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\jest.config.js",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\jest.preset.js",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\nx.json",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\package.json",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\executors\\extract\\executor.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\executors\\extract\\schema.d.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\frameworks.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\generators\\i18n-core\\generator.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\generators\\i18n-core\\schema.d.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\index.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\shared.spec.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\shared.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\types.d.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\utils.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\tsconfig.base.json",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\workspace.json"
+]
+21:55:22 (21480) DEBUG InputFileResolver Files to mutate: [
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\frameworks.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\index.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\shared.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\types.d.ts",
+  "C:\\Users\\SebasG\\Documents\\nx-plugins\\packages\\i18n\\core\\src\\utils.ts"
+]
+21:55:22 (21480) DEBUG TemporaryDirectory Using temp directory "C:\Users\SebasG\Documents\nx-plugins\.stryker-tmp"
+21:55:22 (21480) DEBUG Instrumenter Instrumenting 5 source files with mutants
+21:55:23 (21480) DEBUG Instrumenter Instrumented packages\i18n\core\src\frameworks.ts (0 mutant(s))
+21:55:23 (21480) DEBUG Instrumenter Instrumented packages\i18n\core\src\index.ts (0 mutant(s))
+21:55:23 (21480) DEBUG Instrumenter Instrumented packages\i18n\core\src\shared.ts (44 mutant(s))
+21:55:23 (21480) DEBUG Instrumenter Instrumented packages\i18n\core\src\types.d.ts (0 mutant(s))
+21:55:23 (21480) DEBUG Instrumenter Instrumented packages\i18n\core\src\utils.ts (69 mutant(s))
+21:55:23 (21480) INFO Instrumenter Instrumented 5 source file(s) with 113 mutant(s)
+21:55:23 (21480) INFO ConcurrencyTokenProvider Creating 7 test runner process(es).
+21:55:23 (21480) DEBUG Sandbox Creating a sandbox for files in C:\Users\SebasG\Documents\nx-plugins\.stryker-tmp\sandbox7898295
+21:55:23 (21480) INFO DryRunExecutor Starting initial test run. This may take a while.
+21:55:23 (21480) DEBUG DryRunExecutor Using timeout of undefined ms.
+21:55:23 (21480) DEBUG TimeoutDecorator Starting timeout timer (300000 ms) for a test run
