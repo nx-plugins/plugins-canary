@@ -19,9 +19,9 @@ export function getTranslations(directory: string, locale: string) {
     }
 }
 
-// export function getTranslationById(translations: any, id: string) {
-//     return translations ? translations[id] : null;
-// }
+export function getTranslationById(translations: any, id: string) {
+    return translations.hasOwnProperty(id) ? translations[id] : null;
+}
 
 // export function getWorkspaceGraph() {
 //     return onlyWorkspaceProjects(createProjectGraph());
