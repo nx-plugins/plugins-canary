@@ -1,4 +1,4 @@
-import { getProjectDeps, getTranslationById, getTranslations, getWorkspaceGraph } from './utils';
+import { getNodesFiles, getProjectDeps, getTranslationById, getTranslations, getWorkspaceGraph } from './utils';
 import * as fileUtils from '@nrwl/workspace/src/utils/fileutils';
 import * as workspace from '@nrwl/workspace';
 import * as projectGraph from '@nrwl/workspace/src/core/project-graph';
@@ -97,39 +97,99 @@ describe("Utils", () => {
     });
 
     describe('getProjectDeps', () => {
-        it('should return the project', ()=>{
+        it('should return the project', () => {
             const depGraph = {
-                  "nodes": {
+                "nodes": {
                     "sample-app": {
-                      "name": "sample-app",
-                      "type": "app",
-                      "data": {
-                        "root": "apps/sample-app",
-                        "sourceRoot": "apps/sample-app",
-                        "projectType": "application",
-                        "schematics": {},
-                        "architect": {
+                        "name": "sample-app",
+                        "type": "app",
+                        "data": {
+                            "root": "apps/sample-app",
+                            "sourceRoot": "apps/sample-app",
+                            "projectType": "application",
+                            "schematics": {},
+                            "architect": {
 
-                        },
-                        "tags": [],
-                        "files": []
-                      }
+                            },
+                            "tags": [],
+                            "files": []
+                        }
                     }
-                  },
-                  "dependencies": {
+                },
+                "dependencies": {
                     "sample-app-e2e": [
-                      {
-                        "type": "implicit",
-                        "source": "sample-app-e2e",
-                        "target": "sample-app"
-                      }
+                        {
+                            "type": "implicit",
+                            "source": "sample-app-e2e",
+                            "target": "sample-app"
+                        }
                     ],
                     "sample-app": [
                     ]
-                  }
-              };
-              
-              expect(getProjectDeps(depGraph, 'sample-app')).toMatchObject(depGraph.dependencies['sample-app']);
+                }
+            };
+
+            expect(getProjectDeps(depGraph, 'sample-app')).toMatchObject(depGraph.dependencies['sample-app']);
+        });
+    });
+
+    describe('getNodesFiles', () => {
+        it('should return the project', () => {
+            const depGraph = {
+                "nodes": {
+                    "sample-app": {
+                        "name": "sample-app",
+                        "type": "app",
+                        "data": {
+                            "root": "apps/sample-app",
+                            "sourceRoot": "apps/sample-app",
+                            "projectType": "application",
+                            "schematics": {},
+                            "architect": {
+
+                            },
+                            "tags": [],
+                            "files": [
+                                {
+                                    "file": "libs/sample-app/README.md",
+                                    "hash": "6124d290bd8110366a3d490c9bc17cfe5ccb761a",
+                                    "ext": ".spec.ts"
+                                },
+                                {
+                                    "file": "libs/sample-app/src/index.ts",
+                                    "hash": "8401411923c163e04554874baae8ee936c09aa64",
+                                    "ext": ".ts"
+                                },
+                                {
+                                    "file": "libs/sample-app/src/lib/inbox-messages/inbox-messages.tsx",
+                                    "hash": "34a095c968ebcfc757883b7707650dd0e267a2be",
+                                    "ext": ".tsx"
+                                },
+                                {
+                                    "file": "libs/sample-app/tsconfig.json",
+                                    "hash": "d8eb687121eddfbb13549fcb4f716217dfdddea8",
+                                    "ext": ".json"
+                                },
+                            ]
+                        }
+                    }
+                },
+                "dependencies": {
+                    "sample-app-e2e": [
+                        {
+                            "type": "implicit",
+                            "source": "sample-app-e2e",
+                            "target": "sample-app"
+                        }
+                    ],
+                    "sample-app": [
+                    ]
+                }
+            };
+
+            expect(getNodesFiles(depGraph, 'sample-app', '.tsx', '.spec')).toMatchObject(
+                [depGraph.nodes["sample-app"].data.files[2]]
+            );
         });
     });
 });
