@@ -1,4 +1,4 @@
-import { getTranslationById, getTranslations, getWorkspaceGraph } from './utils';
+import { getProjectDeps, getTranslationById, getTranslations, getWorkspaceGraph } from './utils';
 import * as fileUtils from '@nrwl/workspace/src/utils/fileutils';
 import * as workspace from '@nrwl/workspace';
 import * as projectGraph from '@nrwl/workspace/src/core/project-graph';
@@ -83,8 +83,8 @@ describe("Utils", () => {
         });
     });
 
-    describe('getWorkspaceGraph', ()=>{
-        it('should call createProjectGraph and onlyWorkspaceProjects', ()=>{
+    describe('getWorkspaceGraph', () => {
+        it('should call createProjectGraph and onlyWorkspaceProjects', () => {
             const createProjectGraphSpy = spyOn(projectGraph, 'createProjectGraph').and.returnValue({});
             const onlyWorkspaceProjectsSpy = spyOn(projectGraph, 'onlyWorkspaceProjects');
 
@@ -94,5 +94,42 @@ describe("Utils", () => {
             expect(onlyWorkspaceProjectsSpy).toHaveBeenLastCalledWith({});
 
         })
+    });
+
+    describe('getProjectDeps', () => {
+        it('should return the project', ()=>{
+            const depGraph = {
+                  "nodes": {
+                    "sample-app": {
+                      "name": "sample-app",
+                      "type": "app",
+                      "data": {
+                        "root": "apps/sample-app",
+                        "sourceRoot": "apps/sample-app",
+                        "projectType": "application",
+                        "schematics": {},
+                        "architect": {
+
+                        },
+                        "tags": [],
+                        "files": []
+                      }
+                    }
+                  },
+                  "dependencies": {
+                    "sample-app-e2e": [
+                      {
+                        "type": "implicit",
+                        "source": "sample-app-e2e",
+                        "target": "sample-app"
+                      }
+                    ],
+                    "sample-app": [
+                    ]
+                  }
+              };
+              
+              expect(getProjectDeps(depGraph, 'sample-app')).toMatchObject(depGraph.dependencies['sample-app']);
+        });
     });
 });

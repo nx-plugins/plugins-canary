@@ -27,9 +27,9 @@ export function getWorkspaceGraph() {
     return onlyWorkspaceProjects(createProjectGraph());
 }
 
-// export function getProjectDeps(depGraph: ProjectGraph, project: string) {
-//     return depGraph.dependencies[project];
-// }
+export function getProjectDeps(depGraph: ProjectGraph, project: string) {
+    return depGraph.dependencies[project];
+}
 
 // export function getNodesFiles(depGraph: ProjectGraph, project: string, include: string, exclude: string) {
 //     return depGraph.nodes[project].data.files.filter((i) =>
