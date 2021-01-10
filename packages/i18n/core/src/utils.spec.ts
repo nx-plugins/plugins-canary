@@ -1,8 +1,10 @@
-import { getTranslationById, getTranslations } from './utils';
+import { getTranslationById, getTranslations, getWorkspaceGraph } from './utils';
 import * as fileUtils from '@nrwl/workspace/src/utils/fileutils';
 import * as workspace from '@nrwl/workspace';
+import * as projectGraph from '@nrwl/workspace/src/core/project-graph';
 
 jest.mock('@nrwl/workspace/src/utils/fileutils');
+jest.mock('@nrwl/workspace/src/core/project-graph');
 jest.mock('@nrwl/workspace');
 
 describe("Utils", () => {
@@ -79,5 +81,18 @@ describe("Utils", () => {
         it('should return null if translations are empty', () => {
             expect(getTranslationById({}, "pageHeader")).toEqual(null);
         });
+    });
+
+    describe('getWorkspaceGraph', ()=>{
+        it('should call createProjectGraph and onlyWorkspaceProjects', ()=>{
+            const createProjectGraphSpy = spyOn(projectGraph, 'createProjectGraph').and.returnValue({});
+            const onlyWorkspaceProjectsSpy = spyOn(projectGraph, 'onlyWorkspaceProjects');
+
+            getWorkspaceGraph();
+
+            expect(createProjectGraphSpy).toHaveBeenLastCalledWith();
+            expect(onlyWorkspaceProjectsSpy).toHaveBeenLastCalledWith({});
+
+        })
     });
 });

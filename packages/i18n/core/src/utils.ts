@@ -23,9 +23,9 @@ export function getTranslationById(translations: any, id: string) {
     return translations.hasOwnProperty(id) ? translations[id] : null;
 }
 
-// export function getWorkspaceGraph() {
-//     return onlyWorkspaceProjects(createProjectGraph());
-// }
+export function getWorkspaceGraph() {
+    return onlyWorkspaceProjects(createProjectGraph());
+}
 
 // export function getProjectDeps(depGraph: ProjectGraph, project: string) {
 //     return depGraph.dependencies[project];
