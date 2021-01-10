@@ -6,6 +6,7 @@ import { readJsonFile } from '@nrwl/workspace';
 import { fileExists, writeJsonFile } from '@nrwl/workspace/src/utils/fileutils';
 import * as strip from "strip-comments";
 import { getTranslatableContent } from './shared';
+import { FileData } from '@nrwl/workspace/src/core/file-utils';
 
 export function getTranslations(directory: string, locale: string) {
     if (!fileExists(`${directory}/messages.${locale}.json`)) {
@@ -36,13 +37,13 @@ export function getNodesFiles(depGraph: ProjectGraph, project: string, include: 
         i.ext === include && !i.file.includes(exclude));
 }
 
-// export function getProjectDepsFiles(depGraph: ProjectGraph, projectDeps: ProjectGraphDependency[], include: string, exclude: string) {
-//     const deps = projectDeps.map((p: any) => {
-//         return getNodesFiles(depGraph, p.target, include, exclude);
-//     });
-//     const a = deps as any;
-//     return a.flat();
-// }
+export function getProjectDepsFiles(depGraph: ProjectGraph, projectDeps: ProjectGraphDependency[], include: string, exclude: string) {
+    const deps = projectDeps.map((p: any) => {
+        return getNodesFiles(depGraph, p.target, include, exclude);
+    });
+    const a = deps as any;
+    return a.flat();
+}
 
 // export function extractElementsByTagInFiles(tagName, files: NodeFile[]) {
 //     return files.map((p) => {

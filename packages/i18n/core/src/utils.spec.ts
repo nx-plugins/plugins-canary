@@ -1,4 +1,4 @@
-import { getNodesFiles, getProjectDeps, getTranslationById, getTranslations, getWorkspaceGraph } from './utils';
+import { getNodesFiles, getProjectDeps, getProjectDepsFiles, getTranslationById, getTranslations, getWorkspaceGraph } from './utils';
 import * as fileUtils from '@nrwl/workspace/src/utils/fileutils';
 import * as workspace from '@nrwl/workspace';
 import * as projectGraph from '@nrwl/workspace/src/core/project-graph';
@@ -134,7 +134,7 @@ describe("Utils", () => {
     });
 
     describe('getNodesFiles', () => {
-        it('should return the project', () => {
+        it('should return the files', () => {
             const depGraph = {
                 "nodes": {
                     "sample-app": {
@@ -189,6 +189,115 @@ describe("Utils", () => {
 
             expect(getNodesFiles(depGraph, 'sample-app', '.tsx', '.spec')).toMatchObject(
                 [depGraph.nodes["sample-app"].data.files[2]]
+            );
+        });
+    });
+
+    describe('getProjectDepsFiles', () => {
+        it('should return project files', () => {
+            const depGraph = {
+                "nodes": {
+                    "sample-app": {
+                        "name": "sample-app",
+                        "type": "app",
+                        "data": {
+                            "root": "apps/sample-app",
+                            "sourceRoot": "apps/sample-app",
+                            "projectType": "application",
+                            "schematics": {},
+                            "architect": {
+
+                            },
+                            "tags": [],
+                            "files": [
+                                {
+                                    "file": "libs/sample-app/README.md",
+                                    "hash": "6124d290bd8110366a3d490c9bc17cfe5ccb761a",
+                                    "ext": ".spec.ts"
+                                },
+                                {
+                                    "file": "libs/sample-app/src/index.ts",
+                                    "hash": "8401411923c163e04554874baae8ee936c09aa64",
+                                    "ext": ".ts"
+                                },
+                                {
+                                    "file": "libs/sample-app/src/lib/inbox-messages/inbox-messages.tsx",
+                                    "hash": "34a095c968ebcfc757883b7707650dd0e267a2be",
+                                    "ext": ".tsx"
+                                },
+                                {
+                                    "file": "libs/sample-app/tsconfig.json",
+                                    "hash": "d8eb687121eddfbb13549fcb4f716217dfdddea8",
+                                    "ext": ".json"
+                                },
+                            ]
+                        }
+                    },
+                    "sample-app-ui": {
+                        "name": "sample-app-ui",
+                        "type": "lib",
+                        "data": {
+                            "root": "libs/sample-app-ui",
+                            "sourceRoot": "libs/sample-app-ui/src",
+                            "projectType": "library",
+                            "schematics": {},
+                            "architect": {},
+                            "tags": [],
+                            "files": [
+                                {
+                                    "file": "libs/sample-app-ui/babel-jest.config.json",
+                                    "hash": "bf04d5f81f7c40fce68a2e051f1d4652f7b7c9c9",
+                                    "ext": ".json"
+                                },
+                                {
+                                    "file": "libs/sample-app-ui/jest.config.js",
+                                    "hash": "b33a2c975c6ffe73a8225b91e2ad04647132b6a3",
+                                    "ext": ".js"
+                                },
+                                {
+                                    "file": "libs/sample-app-ui/README.md",
+                                    "hash": "6124d290bd8110366a3d490c9bc17cfe5ccb761a",
+                                    "ext": ".md"
+                                },
+                                {
+                                    "file": "libs/sample-app-ui/src/index.ts",
+                                    "hash": "8401411923c163e04554874baae8ee936c09aa64",
+                                    "ext": ".spec.tsx"
+                                },
+                                {
+                                    "file": "libs/sample-app-ui/src/lib/inbox-messages/inbox-messages.tsx",
+                                    "hash": "34a095c968ebcfc757883b7707650dd0e267a2be",
+                                    "ext": ".tsx"
+                                },
+                            ]
+                        }
+                    },
+                },
+                "dependencies": {
+                    "sample-app-e2e": [
+                        {
+                            "type": "implicit",
+                            "source": "sample-app-e2e",
+                            "target": "sample-app"
+                        }
+                    ],
+                    "sample-app": [
+                        {
+                            "type": "static",
+                            "source": "sample-app",
+                            "target": "sample-app-ui"
+                        }
+                    ],
+                    "sample-app-ui": []
+                }
+            };
+
+            expect(getProjectDepsFiles(depGraph, [{
+                "type": "static",
+                "source": "sample-app",
+                "target": "sample-app-ui"
+            }], '.tsx', '.spec')).toMatchObject(
+                [depGraph.nodes["sample-app-ui"].data.files[4]]
             );
         });
     });
