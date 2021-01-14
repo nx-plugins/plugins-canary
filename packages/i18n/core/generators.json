@@ -7,6 +7,11 @@
       "factory": "./src/generators/i18n-core/generator",
       "schema": "./src/generators/i18n-core/schema.json",
       "description": "i18n-core generator"
+    },
+    "sample": {
+      "factory": "./src/generators/sample/generator",
+      "schema": "./src/generators/sample/schema.json",
+      "description": "sample generator"
     }
   }
 }

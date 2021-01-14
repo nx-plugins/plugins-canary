@@ -14,17 +14,6 @@
     ".eslintrc.json": "*",
     "nx.json": "*"
   },
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "@nrwl/nx-cloud",
-      "options": {
-        "accessToken": "YTZhMzJlNWQtYTE5Ny00N2E0LWFjMGUtNjlmNzUwYWM2ZmRjfHJlYWQtd3JpdGU=",
-        "cacheableOperations": ["build", "lint", "e2e"],
-        "canTrackAnalytics": false,
-        "showUsageWarnings": true
-      }
-    }
-  },
   "projects": {
     "i18n-react": {
       "tags": []

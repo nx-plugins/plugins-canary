@@ -2,6 +2,11 @@
   "$schema": "http://json-schema.org/schema",
   "generators": {},
   "executors": {
+    "sample": {
+      "implementation": "./src/executors/sample/executor",
+      "schema": "./src/executors/sample/schema.json",
+      "description": "sample executor"
+    },
     "extract": {
       "implementation": "./src/executors/extract/executor",
       "schema": "./src/executors/extract/schema.json",
