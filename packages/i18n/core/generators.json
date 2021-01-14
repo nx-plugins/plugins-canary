@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "name": "i18n-core",
+  "version": "0.0.1",
+  "generators": {
+    "i18n-core": {
+      "factory": "./src/generators/i18n-core/generator",
+      "schema": "./src/generators/i18n-core/schema.json",
+      "description": "i18n-core generator"
+    }
+  }
+}

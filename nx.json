@@ -1,26 +1,18 @@
 {
   "npmScope": "nx-plugins",
-  "affected": {
-    "defaultBase": "master"
-  },
+  "affected": { "defaultBase": "master" },
   "implicitDependencies": {
     "workspace.json": "*",
-    "package.json": {
-      "dependencies": "*",
-      "devDependencies": "*"
-    },
+    "package.json": { "dependencies": "*", "devDependencies": "*" },
     "tsconfig.base.json": "*",
     "tslint.json": "*",
     ".eslintrc.json": "*",
     "nx.json": "*"
   },
   "projects": {
-    "i18n-react": {
-      "tags": []
-    }
+    "i18n-react": { "tags": [] },
+    "i18n-core": { "tags": [] },
+    "i18n-core-e2e": { "tags": [], "implicitDependencies": ["i18n-core"] }
   },
-  "workspaceLayout": {
-    "appsDir": "packages",
-    "libsDir": "packages"
-  }
+  "workspaceLayout": { "appsDir": "packages", "libsDir": "packages" }
 }

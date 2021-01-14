@@ -17,10 +17,7 @@
     "baseUrl": ".",
     "paths": {
       "@nx-plugins/i18n-react": ["packages/i18n/react/src/index.ts"],
-      "@nx-plugins/i18n-core": [
-        "dist/packages/i18n/core/src",
-        "packages/i18n/core/src/index.ts"
-      ]
+      "@nx-plugins/i18n-core": ["packages/i18n/core/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

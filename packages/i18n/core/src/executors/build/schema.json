@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "cli": "nx",
+  "title": "Build executor",
+  "description": "",
+  "type": "object",
+  "properties": {
+    "framework": {
+      "description": "Add tags to the project (used for linting)",
+      "type": "string",
+      "alias": "f",
+      "default": "react"
+    },
+    "directory": {
+      "type": "string",
+      "description": "A directory where the translations are or will be placed",
+      "alias": "d"
+    },
+    "locales": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "description": "A directory where the project is placed",
+      "alias": "l"
+    },
+    "verbose": {
+      "description": "Verbose details",
+      "type": "boolean",
+      "alias": "v",
+      "default": false
+    }
+  },
+  "required": []
+}
