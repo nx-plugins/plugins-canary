@@ -17,13 +17,6 @@
   "projects": {
     "i18n-react": {
       "tags": []
-    },
-    "i18n-core": {
-      "tags": []
-    },
-    "i18n-core-e2e": {
-      "tags": [],
-      "implicitDependencies": ["i18n-core"]
     }
   },
   "workspaceLayout": {
