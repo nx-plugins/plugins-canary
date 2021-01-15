@@ -36,16 +36,16 @@ export function getNodesFiles(depGraph: ProjectGraph, project: string, include: 
 }
 
 export function getProjectDepsFiles(depGraph: ProjectGraph, projectDeps: ProjectGraphDependency[], include: string, exclude: string) {
-    const deps = projectDeps.map((p: any) => {
-        return getNodesFiles(depGraph, p.target, include, exclude);
+    let result = [];
+    projectDeps.forEach((p) => {
+        result = result.concat(getNodesFiles(depGraph, p.target, include, exclude));
     });
-    const a = deps as any;
-    return a.flat();
+    return result;
 }
 
 export function extractTranslateElements(files: FileData[]) {
-    return files.map((file) => {
-        const elements = [];
+    const result = [];
+    files.forEach((file) => {
         const fileContent = readFileSync(file.file).toString();
         const ast = parser.parse(fileContent, {
             sourceType: 'module',
@@ -62,9 +62,10 @@ export function extractTranslateElements(files: FileData[]) {
                                     return attribute.name.name === "value"
                                 }).value.expression.value;
 
-                                elements.push({
-                                    value,
-                                    type: openingElementName
+                                result.push({
+                                    metadata: getTranslatableContent(value),
+                                    type: openingElementName,
+                                    file
                                 });
                             }
                         });
@@ -72,97 +73,37 @@ export function extractTranslateElements(files: FileData[]) {
                 });
             }
         });
-        console.log(JSON.stringify(elements));
-        return elements;
-    })
-}
-
-// export function extractElementsByTagInFiles(tagName, files: NodeFile[]) {
-//     return files.map((p) => {
-//         const chain = [];
-//         const fileContent = readFileSync(p.file).toString();
-//         const elements = parse(strip(fileContent)) as [];
-//         findElementsByTagName(chain, tagName, elements, p);
-//         return chain;
-//     });
-// }
-
-// function findElementsByTagName(chain, tagName, elements, p) {
-//     for (let element of elements) {
-//         if (element.tagName === tagName) {
-//             chain.push({ ...element, file: p.file });
-//         } else {
-//             if (element.children) {
-//                 findElementsByTagName(chain, tagName, element.children, p)
-//             }
-//         }
-//     }
-// }
-
-export function manageMetadata(e) {
-    const value = removeQuotes(e.attributes.find((a) => a.key === 'value'));
-    const { meaning, description, id } = getTranslatableContent(value);
-    const content = e.children.map((c) => {
-        if (c.type === "text") {
-            return c.content.trim();
-        }
-        else {
-            console.error("Invalid element");
-            // Throw an error here because the transunit contains elements inside
-        }
-    }).toString();
-
-    return {
-        value,
-        id,
-        description,
-        meaning,
-        content
-    }
-}
-
-export function manageTrans(elements, translations) {
-    let result = [];
-    // FLAT is used to avoid empty arrays
-    elements.flat().forEach((e) => {
-        const { id, description, meaning, content } = manageMetadata(e);
-        const previousTranslation = getTranslationById(translations, id);
-        result[id] = {
-            id,
-            description,
-            meaning,
-            source: e.file,
-            type: 'TransUnit',
-            target: previousTranslation ? previousTranslation.target : content
-        }
     });
     return result;
 }
 
-export function managePlural(elements, translations) {
+export function manageTranslatableContent(elements, translations) {
     let result = [];
-    elements.flat().forEach((e) => {
-        const { id, description, meaning, content } = manageMetadata(e);
-        const previousTranslation = getTranslationById(translations, id);
-        result[id] = {
-            id,
-            description,
-            meaning,
-            source: e.file,
-            type: 'Plural',
-            target: {
-                zero: previousTranslation ? previousTranslation.target.zero : content,
-                one: previousTranslation ? previousTranslation.target.one : content,
-                two: previousTranslation ? previousTranslation.target.two : content,
-                other: previousTranslation ? previousTranslation.target.other : content,
-            }
+    elements.forEach((e) => {
+        const previousTranslation = getTranslationById(translations, e.metadata.id);
+        switch(e.type){
+            case "TransUnit":
+                result[e.metadata.id] = {
+                    ...e,
+                    file: e.file.file,
+                    target: previousTranslation ? previousTranslation.target : 'empty'
+                };
+            break;
+            case "Plural":
+                result[e.metadata.id] = {
+                    ...e,
+                    file: e.file.file,
+                    target: {
+                        zero: previousTranslation ? previousTranslation.target.zero : "empty",
+                        one: previousTranslation ? previousTranslation.target.one : "empty",
+                        two: previousTranslation ? previousTranslation.target.two : "empty",
+                        other: previousTranslation ? previousTranslation.target.other : "empty",
+                    }
+                };
+            break;
         }
     });
     return result;
-}
-
-export function removeQuotes(value: string) {
-    return value.replace(/['"]+/g, '');
 }
 
 export function writeTranslationFile(directory: string, translations: any, locale: string) {

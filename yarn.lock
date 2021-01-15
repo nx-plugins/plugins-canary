@@ -2904,6 +2904,11 @@ async@^2.5.0, async@^2.6.2:
   dependencies:
     lodash "^4.17.14"
 
+async@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/async/-/async-3.2.0.tgz#b3a2685c5ebb641d3de02d161002c60fc9f85720"
+  integrity sha512-TR2mEZFVOj2pLStYxLht7TyfuRzaydfpxr3k9RpHIzMgw7A64dzsdqCxH1WJyQdoe8T10nDXd9wnEigmiuHIZw==
+
 asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
@@ -3577,6 +3582,14 @@ caseless@~0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
   integrity sha1-G2gcIf+EAzyCZUMJBolCDRhxUdw=
+
+chalk-table@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/chalk-table/-/chalk-table-1.0.2.tgz#b4038e291265d71d649319b647bda1b26e1106f9"
+  integrity sha512-lmtmQtr/GCtbiJiiuXPE5lj0arIXJir5hSjIhye/4Uyr7oTQlP+ufPnHzUS3Bre0xS/VWbz9NfeuPnvse9BXoQ==
+  dependencies:
+    chalk "^2.4.2"
+    strip-ansi "^5.2.0"
 
 chalk@4.1.0, chalk@^4.0.0, chalk@^4.1.0, chalk@~4.1.0:
   version "4.1.0"

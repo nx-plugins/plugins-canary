@@ -66,5 +66,9 @@
     "tslib": "^2.0.0",
     "tslint": "~6.1.0",
     "typescript": "~4.0.3"
+  },
+  "dependencies": {
+    "async": "^3.2.0",
+    "chalk-table": "^1.0.2"
   }
 }
