@@ -18,7 +18,7 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
       const projectDeps = getProjectDeps(depGraph, context.projectName);
       const appTsxFiles = getNodesFiles(depGraph, context.projectName, '.tsx', '.spec');
       const projectDepsTsxFiles = getProjectDepsFiles(depGraph, projectDeps, '.tsx', '.spec');
-      const elementsApp = (extractTranslateElements([...appTsxFiles,...projectDepsTsxFiles]) as any);
+      const elementsApp = await extractTranslateElements([...appTsxFiles,...projectDepsTsxFiles]);
 
       const chalkOptions = {
         leftPad: 2,
@@ -42,16 +42,12 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
       logger.log(table);
 
 
-      options.locales.map((locale) => {
+      options.locales.forEach((locale) => {
         logger.warn(`Extracting messages for locale: ${locale}`);
 
         try {
           const translations = getTranslations(options.directory, locale);
           logger.info(translations ? `No translations founded. Creating a new messages file` : `Translations founded. Updating messages file`);
-          // const translationsUnitsApp = manageTranslatableContent(transUnitsApp, translations);
-          // const translationsUnitsProjectDeps = manageTranslatableContent(transUnitsProjectDeps, translations);
-          // const translationsPluralsApp = manageTranslatableContent(pluralsApp, translations);
-          // const translationsPluralsProjectsDeps = manageTranslatableContent(pluralsProjectsDeps, translations);
           const messages = manageTranslatableContent(elementsApp, translations)
           writeTranslationFile(options.directory, { ...messages }, locale);
           logger.fatal(`Locales were save at: ${options.directory}/messages.${locale}.json`);
@@ -76,6 +72,6 @@ export default async function runExecutor(options: BuildExecutorSchema, context:
     logger.error('No locales defined!');
     logger.error(`Add 'locales' to the i18n configuration for the project.`);
   } else {
-    from(extractor(options, context))
+    await extractor(options, context)
   }
 }
