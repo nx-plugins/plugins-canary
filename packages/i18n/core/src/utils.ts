@@ -67,7 +67,7 @@ export function extractTranslateElements(files: FileData[]): Promise<any[]> {
                                             }).value.expression.value;
     
                                             result.push({
-                                                ...value,
+                                                file: item.file,
                                                 metadata: getTranslatableContent(value),
                                                 type: openingElementName,
                                             });

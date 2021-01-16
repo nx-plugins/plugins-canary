@@ -7,6 +7,7 @@ import { Frameworks } from '../../frameworks';
 import { logger, TargetContext } from '@nrwl/devkit';
 import * as chalk from 'chalk';
 import * as chalkTable from 'chalk-table';
+import { forEachOf } from "async";
 
 async function extractor(options: BuildExecutorSchema, context: TargetContext) {
   switch (options.framework) {
@@ -18,7 +19,7 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
       const projectDeps = getProjectDeps(depGraph, context.projectName);
       const appTsxFiles = getNodesFiles(depGraph, context.projectName, '.tsx', '.spec');
       const projectDepsTsxFiles = getProjectDepsFiles(depGraph, projectDeps, '.tsx', '.spec');
-      const elementsApp = await extractTranslateElements([...appTsxFiles,...projectDepsTsxFiles]);
+      const elementsApp = await extractTranslateElements([...appTsxFiles, ...projectDepsTsxFiles]);
 
       const chalkOptions = {
         leftPad: 2,
@@ -30,7 +31,7 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
       };
 
       ;
-      const table = chalkTable(chalkOptions, 
+      const table = chalkTable(chalkOptions,
         elementsApp.map((i) => ({
           id: i.metadata.id,
           type: i.type,
@@ -38,25 +39,26 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
         }))
       );
 
-      logger.info(`NX I18n Statistics`);
-      logger.log(table);
+      
 
-
-      options.locales.forEach((locale) => {
-        logger.warn(`Extracting messages for locale: ${locale}`);
-
+      forEachOf(options.locales, (locale, _key, callback) => {
         try {
           const translations = getTranslations(options.directory, locale);
-          logger.info(translations ? `No translations founded. Creating a new messages file` : `Translations founded. Updating messages file`);
           const messages = manageTranslatableContent(elementsApp, translations)
-          writeTranslationFile(options.directory, { ...messages }, locale);
-          logger.fatal(`Locales were save at: ${options.directory}/messages.${locale}.json`);
+          console.log(`\n ${chalk.cyan('>')} ${chalk.inverse(chalk.bold(chalk.cyan(` Locale: ${locale} `)))}
+          ${Object.keys(translations).length > 0 ?
+          '\n Messages file founded. Updating file' : '\n No translations founded. Creating a new messages file' }`);
+                writeTranslationFile(options.directory, { ...messages }, locale);
         }
         catch (e) {
-          logger.error(e.message);
-          logger.error(`Please check that the file is not empty or contains some syntax errors`);
-
+          return callback(e);
         }
+        callback();
+      }, err => {
+        if (err) logger.fatal(err.message);
+        logger.info(`NX I18n Statistics`);
+      logger.log(table);
+        logger.fatal(`Locales were save at: ${options.directory}`);
       });
       return { success: true };
     }
@@ -72,6 +74,7 @@ export default async function runExecutor(options: BuildExecutorSchema, context:
     logger.error('No locales defined!');
     logger.error(`Add 'locales' to the i18n configuration for the project.`);
   } else {
+    options.locales = [...new Set(options.locales)];
     await extractor(options, context)
   }
 }
