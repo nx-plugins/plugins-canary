@@ -34,7 +34,7 @@ export function getProjectDeps(depGraph: ProjectGraph, project: string) {
 
 export function getNodesFiles(depGraph: ProjectGraph, project: string, include: string, exclude: string) {
     return depGraph.nodes[project].data.files.filter((i) =>
-        i.ext === include && !i.file.includes(exclude)).map((i)=>({...i, project}));
+        i.ext === include && !i.file.includes(exclude)).map((i) => ({ ...i, project }));
 }
 
 export function getProjectDepsFiles(depGraph: ProjectGraph, projectDeps: ProjectGraphDependency[], include: string, exclude: string) {
@@ -45,16 +45,18 @@ export function getProjectDepsFiles(depGraph: ProjectGraph, projectDeps: Project
     return result;
 }
 
-export function getWorkspaceScope(){
+export function getWorkspaceScope() {
     const config = readNxJson();
     return config.npmScope;
 }
 
-export function extractTranslateElements(files: FileData[], depGraph: ProjectGraph): Promise<any[]> {
+export function extractTranslateElements(files: FileData[], depGraph: ProjectGraph): Promise<any> {
     return new Promise((res, rej) => {
-        let result = [];
+        const result = [];
+        const metadata = [];
         forEachOf(files, (item, _key, callback) => {
             readFile(item.file, "utf8", (err, data) => {
+                const dependencies = [];
                 if (err) return callback(err);
                 try {
                     const ast = parser.parse(data, {
@@ -63,34 +65,18 @@ export function extractTranslateElements(files: FileData[], depGraph: ProjectGra
                     });
                     const targetProjectLocator = new TargetProjectLocator(depGraph.nodes);
                     ast.program.body.forEach((i: any) => {
-                        const dependencies = [];
                         const workspaceScope = getWorkspaceScope();
-                        if(item.type === "ImportDeclaration" && i.source.value.includes(workspaceScope)){
+                        if (i.type === "ImportDeclaration" && i.source.value.includes(workspaceScope)) {
                             dependencies.push({
                                 "type": "static",
                                 "source": item.project,
                                 "target": targetProjectLocator.findProjectWithImport(i.source.value, item.file, workspaceScope)
-                              });
+                            });
                         }
                         if (i.type === "ExportNamedDeclaration") {
                             i.declaration.body.body.forEach((bodyItem) => {
-                                if (bodyItem.argument && bodyItem.argument.type === "JSXFragment") {
-                                    bodyItem.argument.children.forEach((itemChild) => {
-                                        let openingElementName = itemChild.openingElement?.name.name;
-                                        if (itemChild.type === "JSXElement" && (openingElementName.includes('TransUnit') || openingElementName.includes('Plural'))) {
-                                            const value = itemChild.openingElement.attributes.find((attribute) => {
-                                                return attribute.name.name === "value"
-                                            }).value.expression.value;
-                                            result.push({
-                                                file: item.file,
-                                                metadata: getTranslatableContent(value),
-                                                type: openingElementName,
-                                                target:extractTarget(itemChild),
-                                                project: item.project,
-                                                dependencies
-                                            });
-                                        }
-                                    });
+                                if (bodyItem.argument && bodyItem.argument.type !== "JSXText") {
+                                    extractElements(item, bodyItem.argument.children, result, dependencies);
                                 }
                             });
                         }
@@ -98,37 +84,62 @@ export function extractTranslateElements(files: FileData[], depGraph: ProjectGra
                 } catch (e) {
                     return callback(e);
                 }
+                metadata.push({
+                    file: item.file,
+                    project: item.project,
+                    dependencies 
+                });
+                
                 callback();
             });
         }, err => {
             if (err) rej(err.message);
-            res(result);
+            res({result, metadata});
         });
-    
-
     });
 }
 
 
-export function extractTarget(itemChild, contador = 0){
+export function extractElements(item, children, result, dependencies) {
+    children.forEach((itemChild) => {
+        let openingElementName = itemChild.openingElement?.name.name;
+        if (itemChild.children) {
+            extractElements(item, itemChild.children, result, dependencies);
+        }
+        if (itemChild.type === "JSXElement" && (openingElementName.includes('TransUnit') || openingElementName.includes('Plural'))) {
+            const value = itemChild.openingElement.attributes.find((attribute) => {
+                return attribute.name.name === "value"
+            }).value.expression.value;
+            result.push({
+                file: item.file,
+                metadata: getTranslatableContent(value),
+                type: openingElementName,
+                target: extractTarget(itemChild),
+                project: item.project,
+                dependencies
+            });
+        }
+    });
+}
+
+export function extractTarget(itemChild, contador = 0) {
     let content = '';
     itemChild.children.forEach((item) => {
-      switch (item.type) {
-        case "JSXElement":
-          content += `<${contador}> ${extractTarget(item, contador + 1)}</${contador}>`
-          contador += 1;
-          break;
-        case "JSXText":
-          content += item.value.trim();
-          break;
-        case "JSXExpressionContainer":
-          content +=  `{{${item.expression.name}}}`
-          break;
-      }
+        switch (item.type) {
+            case "JSXElement":
+                content += `<${contador}> ${extractTarget(item, contador + 1)}</${contador}>`
+                contador += 1;
+                break;
+            case "JSXText":
+                content += item.value.trim();
+                break;
+            case "JSXExpressionContainer":
+                content += `{{${item.expression.name}}}`
+                break;
+        }
     });
-    console.log(`Content: ${content}`);
     return content;
-  }
+}
 
 export function manageTranslatableContent(elements, translations) {
     let result = [];
@@ -136,9 +147,11 @@ export function manageTranslatableContent(elements, translations) {
         const previousTranslation = getTranslationById(translations, e.metadata.id);
         switch (e.type) {
             case "TransUnit":
+                const { metadata, file, dependencies } = e;
                 result[e.metadata.id] = {
-                    metada: e.metadata,
-                    file: e.file,
+                    metadata,
+                    file,
+                    dependencies,
                     target: previousTranslation ? previousTranslation.target : e.target
                 };
                 break;

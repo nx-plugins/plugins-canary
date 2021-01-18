@@ -1,43 +1,26 @@
 const parser = require("@babel/parser");
 
-const code = `import { Plural, TransUnit } from '@nx-plugins/i18n-react';
-import React, { useState } from 'react';
-import { I18nHeader } from '@plugins-examples/i18n/header';
-
-import './inbox.module.css';
+const code = `import React from 'react';
+import { TransUnit } from '@nx-plugins/i18n-react';
+import { SimpleText } from '@plugins-examples/core';
 
 /* eslint-disable-next-line */
-export interface InboxProps {}
+export interface I18nFooterProps {}
 
-export function Inbox(props: InboxProps) {
-  const [count, setCount] = useState(0);
-  const user = 'name';
+export function I18nFooter(props: I18nFooterProps) {
   return (
-    <>
-      <p> Hola </p>
-      <TransUnit value={'paragraph|description@@@sebitas'}>
-      We invited <strong>{user}<p>Hello, you are <span>Sebas </span> </p></strong>.
-      </TransUnit>
-      <br />
-      {/* <button
-        onClick={() => {
-          setCount(count + 1);
-        }}
-      >
-        Increment
-      </button>
-      <br />
-      <Plural value={'paragraph | description@@@sebas'} count={count}>
-        Este es nuevo
-      </Plural>
-       */}
-       <I18nHeader></I18nHeader>
+    <div>
+      <>
+      <div>
+      <TransUnit value={'paragraph|description@@@footer'}>This is the footer</TransUnit>
+      <SimpleText />
+      </div>
     </>
+    </div>
   );
 }
 
-export default Inbox;
-
+export default I18nFooter;
 `;
 
 const ast = parser.parse(code, {
@@ -137,9 +120,11 @@ let output = [];
 //   console.log(`Content: ${content}`);
 //   return content;
 // }
-ast.program.body.forEach((item)=>{
-  if(item.type === "ImportDeclaration" && item.source.value.includes("@plugins-examples")){
-
-  }
-});
+// const deps = [];
+// ast.program.body.forEach((item)=>{
+//   if(item.type === "ImportDeclaration" && item.source.value.includes("@plugins-examples")){
+//     deps.push({value: item.value});
+//   }
+// });
+// console.log(deps);
 console.log(JSON.stringify(ast))

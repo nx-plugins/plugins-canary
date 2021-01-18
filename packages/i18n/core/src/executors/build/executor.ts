@@ -21,7 +21,7 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
       const projectDeps = getProjectDeps(depGraph, context.projectName);
       const appTsxFiles = getNodesFiles(depGraph, context.projectName, '.tsx', '.spec');
       const projectDepsTsxFiles = getProjectDepsFiles(depGraph, projectDeps, '.tsx', '.spec');
-      const elementsApp = await extractTranslateElements([...appTsxFiles, ...projectDepsTsxFiles], depGraph);
+      const {result, metadata} = await extractTranslateElements([...appTsxFiles, ...projectDepsTsxFiles], depGraph);
 
       const chalkOptions = {
         leftPad: 2,
@@ -34,7 +34,7 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
 
       ;
       const table = chalkTable(chalkOptions,
-        elementsApp.map((i) => ({
+        result.map((i) => ({
           id: i.metadata.id,
           type: i.type,
           source: i.file
@@ -46,7 +46,7 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
       forEachOf(options.locales, (locale, _key, callback) => {
         try {
           const translations = getTranslations(options.directory, locale);
-          const messages = manageTranslatableContent(elementsApp, translations)
+          const messages = manageTranslatableContent(result, translations)
           console.log(`\n ${chalk.cyan('>')} ${chalk.inverse(chalk.bold(chalk.cyan(` Locale: ${locale} `)))}
           ${Object.keys(translations).length > 0 ?
               '\n Messages file founded. Updating file' : '\n No translations founded. Creating a new messages file'}`);
