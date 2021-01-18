@@ -1,11 +1,11 @@
 import { readFile } from 'fs';
+import { basename, extname } from 'path';
 import { createProjectGraph, onlyWorkspaceProjects, ProjectGraph, ProjectGraphDependency } from '@nrwl/workspace/src/core/project-graph';
 import { readJsonFile } from '@nrwl/workspace';
 import { fileExists, writeJsonFile } from '@nrwl/workspace/src/utils/fileutils';
 import { getTranslatableContent } from './shared';
-import { FileData, readNxJson } from '@nrwl/workspace/src/core/file-utils';
+import { readNxJson } from '@nrwl/workspace/src/core/file-utils';
 import * as parser from "@babel/parser";
-import { forEachOf } from "async";
 import { TargetProjectLocator } from '@nrwl/workspace/src/core/target-project-locator';
 
 export function getTranslations(directory: string, locale: string) {
@@ -34,7 +34,12 @@ export function getProjectDeps(depGraph: ProjectGraph, project: string) {
 
 export function getNodesFiles(depGraph: ProjectGraph, project: string, include: string, exclude: string) {
     return depGraph.nodes[project].data.files.filter((i) =>
-        i.ext === include && !i.file.includes(exclude)).map((i) => ({ ...i, project }));
+        i.ext === include && !i.file.includes(exclude)).map((i) => ({
+            ...i,
+            project,
+            type: depGraph.nodes[project].type,
+            path: basename(i.file, extname(i.file))
+        }));
 }
 
 export function getProjectDepsFiles(depGraph: ProjectGraph, projectDeps: ProjectGraphDependency[], include: string, exclude: string) {
@@ -50,14 +55,16 @@ export function getWorkspaceScope() {
     return config.npmScope;
 }
 
-export function extractTranslateElements(files: FileData[], depGraph: ProjectGraph): Promise<any> {
-    return new Promise((res, rej) => {
-        const result = [];
-        const metadata = [];
-        forEachOf(files, (item, _key, callback) => {
+export function extractTranslateElements(files: any[], depGraph: ProjectGraph, namespaces): Promise<any> {
+    const promises = [];
+    files.forEach((item) => {
+        promises.push(new Promise((res, rej) => {
+            const elements = [];
+            const dependencies = [];
+
+            const { file, project, type, path } = item;
             readFile(item.file, "utf8", (err, data) => {
-                const dependencies = [];
-                if (err) return callback(err);
+                if (err) return rej(err);
                 try {
                     const ast = parser.parse(data, {
                         sourceType: 'module',
@@ -76,48 +83,69 @@ export function extractTranslateElements(files: FileData[], depGraph: ProjectGra
                         if (i.type === "ExportNamedDeclaration") {
                             i.declaration.body.body.forEach((bodyItem) => {
                                 if (bodyItem.argument && bodyItem.argument.type !== "JSXText") {
-                                    extractElements(item, bodyItem.argument.children, result, dependencies);
+                                    extractElements(item, bodyItem.argument.children, elements, dependencies, namespaces);
                                 }
                             });
                         }
                     });
                 } catch (e) {
-                    return callback(e);
+                    return rej(e);
                 }
-                metadata.push({
-                    file: item.file,
-                    project: item.project,
-                    dependencies 
-                });
-                
-                callback();
+                res({
+                    file,
+                    project,
+                    type,
+                    path,
+                    dependencies,
+                    elements
+                })
             });
-        }, err => {
-            if (err) rej(err.message);
-            res({result, metadata});
-        });
+        }));
     });
+    return Promise.all(promises);
 }
 
 
-export function extractElements(item, children, result, dependencies) {
+export function extractElements(item, children, elements, dependencies, namespaces) {
     children.forEach((itemChild) => {
         let openingElementName = itemChild.openingElement?.name.name;
         if (itemChild.children) {
-            extractElements(item, itemChild.children, result, dependencies);
+            extractElements(item, itemChild.children, elements, dependencies, namespaces);
         }
         if (itemChild.type === "JSXElement" && (openingElementName.includes('TransUnit') || openingElementName.includes('Plural'))) {
             const value = itemChild.openingElement.attributes.find((attribute) => {
                 return attribute.name.name === "value"
             }).value.expression.value;
-            result.push({
-                file: item.file,
-                metadata: getTranslatableContent(value),
-                type: openingElementName,
-                target: extractTarget(itemChild),
-                project: item.project,
-                dependencies
-            });
+            const namespace = itemChild.openingElement.attributes.find((attribute) => {
+                return attribute.name.name === "namespace"
+            })?.value.expression.value;
+            if (!namespaces[namespace] && namespace) {
+                namespaces[namespace] = {
+                    "elements": [],
+                    "type": "namespace",
+                    "path": namespace,
+
+                };
+            }
+            if (namespace) {
+                namespaces[namespace]["elements"].push({
+                    file: item.file,
+                    metadata: getTranslatableContent(value),
+                    type: openingElementName,
+                    target: extractTarget(itemChild),
+                    project: item.project,
+                    dependencies
+                });
+            } else {
+                elements.push({
+                    file: item.file,
+                    metadata: getTranslatableContent(value),
+                    type: openingElementName,
+                    target: extractTarget(itemChild),
+                    project: item.project,
+                    dependencies
+                });
+            }
         }
     });
 }

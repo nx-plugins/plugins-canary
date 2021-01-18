@@ -12,7 +12,7 @@ export function I18nFooter(props: I18nFooterProps) {
     <div>
       <>
       <div>
-      <TransUnit value={'paragraph|description@@@footer'}>This is the footer</TransUnit>
+      <TransUnit value={'paragraph|description@@@footer'} ns={'common'}>This is the footer</TransUnit>
       <SimpleText />
       </div>
     </>

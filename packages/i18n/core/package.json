@@ -1,6 +1,6 @@
 {
   "name": "@nx-plugins/i18n-core",
-  "version": "0.0.1-canary.47",
+  "version": "0.0.1-canary.57",
   "main": "src/index.js",
   "generators": "./generators.json",
   "executors": "./executors.json"
