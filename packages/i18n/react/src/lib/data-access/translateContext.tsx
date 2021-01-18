@@ -1,27 +1,27 @@
 import React, { createContext, useEffect, useState } from 'react';
 
 export interface TranslateContextModel {
-    config: { locales: string[], current: string, messages};
-    changeLocale: (locale: string) => void;
-  };
+  config: { locales: string[]; current: string; messages };
+  changeLocale: (locale: string) => void;
+}
 export const TranslateContext = createContext<TranslateContextModel>(undefined);
 
 export const TranslateContextProvider = (props) => {
-    const [config, setConfig] = useState({});
-    
-    useEffect(() => {
-        setConfig(props.config);
-      }, [props.config]);
+  const [config, setConfig] = useState({});
 
-    const changeLocale = (locale: string) => {
-        setConfig({...config, current: locale});
-   };
+  useEffect(() => {
+    setConfig(props.config);
+  }, [props.config]);
 
-    return (
-        <TranslateContext.Provider value={{config, changeLocale}}>
-            { props.children }
-        </TranslateContext.Provider>
-    );
-  }
+  const changeLocale = (locale: string) => {
+    setConfig({ ...config, current: locale });
+  };
 
-  export default TranslateContextProvider;
+  return (
+    <TranslateContext.Provider value={{ config, changeLocale }}>
+      {props.children}
+    </TranslateContext.Provider>
+  );
+};
+
+export default TranslateContextProvider;

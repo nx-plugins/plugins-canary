@@ -1,4 +1,4 @@
-const parser = require("@babel/parser");
+const parser = require('@babel/parser');
 
 const code = `import React from 'react';
 import { TransUnit } from '@nx-plugins/i18n-react';
@@ -25,7 +25,7 @@ export default I18nFooter;
 
 const ast = parser.parse(code, {
   sourceType: 'module',
-  plugins: ['typescript', 'jsx']
+  plugins: ['typescript', 'jsx'],
 });
 
 let output = [];
@@ -73,7 +73,6 @@ let output = [];
 
 // console.log(JSON.stringify(ast));
 
-
 // let output = [];
 // ast.program.body.forEach((i) => {
 //   if (i.type === "ExportNamedDeclaration") {
@@ -85,8 +84,8 @@ let output = [];
 //             const value = itemChild.openingElement.attributes.find((attribute) => {
 //               return attribute.name.name === "value"
 //             }).value.expression.value;
-//             let content = extractContent(itemChild, content);            
-            
+//             let content = extractContent(itemChild, content);
+
 //             output.push({
 //               value,
 //               type: openingElementName,
@@ -127,4 +126,4 @@ let output = [];
 //   }
 // });
 // console.log(deps);
-console.log(JSON.stringify(ast))
+console.log(JSON.stringify(ast));

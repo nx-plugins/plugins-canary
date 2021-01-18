@@ -1,3 +1,3 @@
 export enum Frameworks {
-    React = "React"
+  React = 'React',
 }

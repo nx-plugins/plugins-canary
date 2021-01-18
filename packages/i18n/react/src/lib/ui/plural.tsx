@@ -21,10 +21,7 @@ export function Plural(props: PluralProps) {
     let { id } = getTranslatableContent(props.value);
     const message = getMessageById(id, config);
     let target;
-    if (
-      message.hasOwnProperty('type') &&
-      message.type === 'Plural'
-    ) {
+    if (message.hasOwnProperty('type') && message.type === 'Plural') {
       switch (props.count) {
         case 0:
           target = message.target.hasOwnProperty('zero')

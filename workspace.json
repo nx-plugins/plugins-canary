@@ -9,25 +9,18 @@
         "lint": {
           "executor": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "packages/i18n/react/**/*.{ts,tsx,js,jsx}"
-            ]
+            "lintFilePatterns": ["packages/i18n/react/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "build": {
           "executor": "@nrwl/web:package",
-          "outputs": [
-            "{options.outputPath}"
-          ],
+          "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/packages/i18n/react",
             "tsConfig": "packages/i18n/react/tsconfig.lib.json",
             "project": "packages/i18n/react/package.json",
             "entryFile": "packages/i18n/react/src/index.ts",
-            "external": [
-              "react",
-              "react-dom"
-            ],
+            "external": ["react", "react-dom"],
             "babelConfig": "@nrwl/react/plugins/bundle-babel",
             "rollupConfig": "@nrwl/react/plugins/bundle-rollup",
             "assets": [
@@ -41,9 +34,7 @@
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/packages/i18n/react"
-          ],
+          "outputs": ["coverage/packages/i18n/react"],
           "options": {
             "jestConfig": "packages/i18n/react/jest.config.js",
             "passWithNoTests": true
@@ -59,16 +50,12 @@
         "lint": {
           "executor": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "packages/i18n/core/**/*.ts"
-            ]
+            "lintFilePatterns": ["packages/i18n/core/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/packages/i18n/core"
-          ],
+          "outputs": ["coverage/packages/i18n/core"],
           "options": {
             "jestConfig": "packages/i18n/core/jest.config.js",
             "passWithNoTests": true
@@ -76,9 +63,7 @@
         },
         "build": {
           "executor": "@nrwl/node:package",
-          "outputs": [
-            "{options.outputPath}"
-          ],
+          "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/packages/i18n/core",
             "tsConfig": "packages/i18n/core/tsconfig.lib.json",
