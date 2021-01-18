@@ -3,9 +3,10 @@ import { createProjectGraph, onlyWorkspaceProjects, ProjectGraph, ProjectGraphDe
 import { readJsonFile } from '@nrwl/workspace';
 import { fileExists, writeJsonFile } from '@nrwl/workspace/src/utils/fileutils';
 import { getTranslatableContent } from './shared';
-import { FileData } from '@nrwl/workspace/src/core/file-utils';
+import { FileData, readNxJson } from '@nrwl/workspace/src/core/file-utils';
 import * as parser from "@babel/parser";
 import { forEachOf } from "async";
+import { TargetProjectLocator } from '@nrwl/workspace/src/core/target-project-locator';
 
 export function getTranslations(directory: string, locale: string) {
     if (!fileExists(`${directory}/messages.${locale}.json`)) {
@@ -33,7 +34,7 @@ export function getProjectDeps(depGraph: ProjectGraph, project: string) {
 
 export function getNodesFiles(depGraph: ProjectGraph, project: string, include: string, exclude: string) {
     return depGraph.nodes[project].data.files.filter((i) =>
-        i.ext === include && !i.file.includes(exclude));
+        i.ext === include && !i.file.includes(exclude)).map((i)=>({...i, project}));
 }
 
 export function getProjectDepsFiles(depGraph: ProjectGraph, projectDeps: ProjectGraphDependency[], include: string, exclude: string) {
@@ -44,7 +45,12 @@ export function getProjectDepsFiles(depGraph: ProjectGraph, projectDeps: Project
     return result;
 }
 
-export function extractTranslateElements(files: FileData[]): Promise<any[]> {
+export function getWorkspaceScope(){
+    const config = readNxJson();
+    return config.npmScope;
+}
+
+export function extractTranslateElements(files: FileData[], depGraph: ProjectGraph): Promise<any[]> {
     return new Promise((res, rej) => {
         let result = [];
         forEachOf(files, (item, _key, callback) => {
@@ -55,7 +61,17 @@ export function extractTranslateElements(files: FileData[]): Promise<any[]> {
                         sourceType: 'module',
                         plugins: ['typescript', 'jsx']
                     });
+                    const targetProjectLocator = new TargetProjectLocator(depGraph.nodes);
                     ast.program.body.forEach((i: any) => {
+                        const dependencies = [];
+                        const workspaceScope = getWorkspaceScope();
+                        if(item.type === "ImportDeclaration" && i.source.value.includes(workspaceScope)){
+                            dependencies.push({
+                                "type": "static",
+                                "source": item.project,
+                                "target": targetProjectLocator.findProjectWithImport(i.source.value, item.file, workspaceScope)
+                              });
+                        }
                         if (i.type === "ExportNamedDeclaration") {
                             i.declaration.body.body.forEach((bodyItem) => {
                                 if (bodyItem.argument && bodyItem.argument.type === "JSXFragment") {
@@ -65,11 +81,13 @@ export function extractTranslateElements(files: FileData[]): Promise<any[]> {
                                             const value = itemChild.openingElement.attributes.find((attribute) => {
                                                 return attribute.name.name === "value"
                                             }).value.expression.value;
-    
                                             result.push({
                                                 file: item.file,
                                                 metadata: getTranslatableContent(value),
                                                 type: openingElementName,
+                                                target:extractTarget(itemChild),
+                                                project: item.project,
+                                                dependencies
                                             });
                                         }
                                     });
@@ -91,6 +109,27 @@ export function extractTranslateElements(files: FileData[]): Promise<any[]> {
     });
 }
 
+
+export function extractTarget(itemChild, contador = 0){
+    let content = '';
+    itemChild.children.forEach((item) => {
+      switch (item.type) {
+        case "JSXElement":
+          content += `<${contador}> ${extractTarget(item, contador + 1)}</${contador}>`
+          contador += 1;
+          break;
+        case "JSXText":
+          content += item.value.trim();
+          break;
+        case "JSXExpressionContainer":
+          content +=  `{{${item.expression.name}}}`
+          break;
+      }
+    });
+    console.log(`Content: ${content}`);
+    return content;
+  }
+
 export function manageTranslatableContent(elements, translations) {
     let result = [];
     elements.forEach((e) => {
@@ -98,9 +137,9 @@ export function manageTranslatableContent(elements, translations) {
         switch (e.type) {
             case "TransUnit":
                 result[e.metadata.id] = {
-                    ...e,
-                    file: e.file.file,
-                    target: previousTranslation ? previousTranslation.target : 'empty'
+                    metada: e.metadata,
+                    file: e.file,
+                    target: previousTranslation ? previousTranslation.target : e.target
                 };
                 break;
             case "Plural":
@@ -108,10 +147,10 @@ export function manageTranslatableContent(elements, translations) {
                     ...e,
                     file: e.file.file,
                     target: {
-                        zero: previousTranslation ? previousTranslation.target.zero : "empty",
-                        one: previousTranslation ? previousTranslation.target.one : "empty",
-                        two: previousTranslation ? previousTranslation.target.two : "empty",
-                        other: previousTranslation ? previousTranslation.target.other : "empty",
+                        zero: previousTranslation ? previousTranslation.target.zero : e.target,
+                        one: previousTranslation ? previousTranslation.target.one : e.target,
+                        two: previousTranslation ? previousTranslation.target.two : e.target,
+                        other: previousTranslation ? previousTranslation.target.other : e.target,
                     }
                 };
                 break;

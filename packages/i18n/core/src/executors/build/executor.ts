@@ -1,13 +1,14 @@
 
-import { from } from 'rxjs';
 import { BuildExecutorSchema } from './schema';
-import { getWorkspaceGraph, extractTranslateElements, getNodesFiles, getProjectDeps, getProjectDepsFiles, getTranslations, writeTranslationFile, manageTranslatableContent } from '../../utils';
+import { getWorkspaceGraph, extractTranslateElements, getNodesFiles, getProjectDeps, getProjectDepsFiles, getTranslations, writeTranslationFile, manageTranslatableContent, getWorkspaceScope } from '../../utils';
 import { ProjectGraph } from '@nrwl/workspace/src/core/project-graph';
 import { Frameworks } from '../../frameworks';
 import { logger, TargetContext } from '@nrwl/devkit';
 import * as chalk from 'chalk';
 import * as chalkTable from 'chalk-table';
 import { forEachOf } from "async";
+import { join } from 'path';
+import { readTsConfig } from '@nrwl/workspace';
 
 async function extractor(options: BuildExecutorSchema, context: TargetContext) {
   switch (options.framework) {
@@ -16,10 +17,11 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
       logger.info(`Framework: ${options.framework}`);
 
       const depGraph = getWorkspaceGraph() as ProjectGraph;
+      
       const projectDeps = getProjectDeps(depGraph, context.projectName);
       const appTsxFiles = getNodesFiles(depGraph, context.projectName, '.tsx', '.spec');
       const projectDepsTsxFiles = getProjectDepsFiles(depGraph, projectDeps, '.tsx', '.spec');
-      const elementsApp = await extractTranslateElements([...appTsxFiles, ...projectDepsTsxFiles]);
+      const elementsApp = await extractTranslateElements([...appTsxFiles, ...projectDepsTsxFiles], depGraph);
 
       const chalkOptions = {
         leftPad: 2,
@@ -35,11 +37,11 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
         elementsApp.map((i) => ({
           id: i.metadata.id,
           type: i.type,
-          source: i.file.file
+          source: i.file
         }))
       );
 
-      
+
 
       forEachOf(options.locales, (locale, _key, callback) => {
         try {
@@ -47,8 +49,8 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
           const messages = manageTranslatableContent(elementsApp, translations)
           console.log(`\n ${chalk.cyan('>')} ${chalk.inverse(chalk.bold(chalk.cyan(` Locale: ${locale} `)))}
           ${Object.keys(translations).length > 0 ?
-          '\n Messages file founded. Updating file' : '\n No translations founded. Creating a new messages file' }`);
-                writeTranslationFile(options.directory, { ...messages }, locale);
+              '\n Messages file founded. Updating file' : '\n No translations founded. Creating a new messages file'}`);
+          writeTranslationFile(options.directory, { ...messages }, locale);
         }
         catch (e) {
           return callback(e);
@@ -57,7 +59,7 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
       }, err => {
         if (err) logger.fatal(err.message);
         logger.info(`NX I18n Statistics`);
-      logger.log(table);
+        logger.log(table);
         logger.fatal(`Locales were save at: ${options.directory}`);
       });
       return { success: true };
