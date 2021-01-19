@@ -113,7 +113,7 @@ export function extractTranslateElements(
                 });
               }
               if (i.type === 'ExportNamedDeclaration') {
-                i.declaration.body.body.forEach((bodyItem) => {
+                i.declaration.body?.body.forEach((bodyItem) => {
                   if (
                     bodyItem.argument &&
                     bodyItem.argument.type !== 'JSXText'

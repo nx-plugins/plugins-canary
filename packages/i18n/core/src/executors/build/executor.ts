@@ -67,14 +67,20 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
           { field: 'source', name: chalk.green('Source') },
         ],
       };
-
+      const statistics = [];
+      elementsApp.forEach((i) => {
+        i.elements.forEach((e) => {
+          const { type, file, metadata } = e;
+          statistics.push({
+            id: metadata.id,
+            type,
+            source: file,
+          });
+        });
+      });
       const table = chalkTable(
         chalkOptions,
-        result.map((i) => ({
-          id: i.metadata.id,
-          type: i.type,
-          source: i.file,
-        }))
+        statistics
       );
 
       forEachOf(
@@ -91,22 +97,24 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
                 console.log(`\n ${chalk.cyan('>')} ${chalk.inverse(
                   chalk.bold(chalk.cyan(` Locale: ${locale} `))
                 )}
-              ${
-                Object.keys(translations).length > 0
-                  ? '\n Messages file founded. Updating file'
-                  : '\n No translations founded. Creating a new messages file'
-              }`);
+              ${Object.keys(translations).length > 0
+                    ? '\n Messages file founded. Updating file'
+                    : '\n No translations founded. Creating a new messages file'
+                  }`);
                 writeTranslationFile(
                   `${options.directory}/pages/${i.path}`,
                   { ...messages },
                   locale
                 );
+              } else {
+                console.log("\n No elements were founded");
               }
             });
 
             Object.values(namespaces).forEach((i: any) => {
               if (i.elements.length > 0) {
                 const messages = manageTranslatableContent(i.elements, {});
+                console.log('\n Namespace file founded. Updating file');
                 writeTranslationFile(
                   `${options.directory}/namespaces/${i.path}`,
                   { ...messages },
@@ -122,8 +130,12 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
         (err) => {
           if (err) logger.fatal(err.message);
           logger.info(`NX I18n Statistics`);
-          logger.log(table);
-          logger.fatal(`Locales were save at: ${options.directory}`);
+          if (statistics.filter((s) => Object.keys(s).length !== 0).length !== 0) {
+            logger.log(table);
+            logger.fatal(`Locales were save at: ${options.directory}`);
+          } else {
+            logger.fatal(`Locales were not generated, please use the <TransUnit>, <Plural> in order to extract the messages`);
+          }
         }
       );
       return { success: true };
