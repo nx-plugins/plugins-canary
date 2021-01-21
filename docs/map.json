@@ -1,0 +1,66 @@
+[
+    {
+        "id": "i18n",
+        "name": "Internationalization (i18n)",
+        "itemList": [
+            {
+                "name": "Getting Started",
+                "id": "getting-started",
+                "itemList": [
+                    {
+                        "name": "Quickstart",
+                        "id": "quickstart",
+                        "file": "i18n/getting-started/quickstart"
+                    },
+                    {
+                        "name": "concepts",
+                        "id": "concepts",
+                        "file": "i18n/getting-started/concepts"
+                    },
+                    {
+                        "name": "namespaces",
+                        "id": "namespaces",
+                        "file": "i18n/getting-started/namespaces"
+                    },
+                    {
+                        "name": "extract-translations",
+                        "id": "extract-translations",
+                        "file": "i18n/getting-started/extract-translations"
+                    },
+                    {
+                        "name": "tutorial",
+                        "id": "tutorial",
+                        "file": "i18n/getting-started/tutorial"
+                    }
+                ]
+            },
+            {
+                "name": "api/reference",
+                "id": "api-reference",
+                "itemList": [
+                    {
+                        "name": "transunit",
+                        "id": "transunit",
+                        "file": "i18n/getting-started/transunit"
+                    },
+                    {
+                        "name": "plural",
+                        "id": "plural",
+                        "file": "i18n/getting-started/plural"
+                    }
+                ]
+            },
+            {
+                "name": "miscellaneous",
+                "id": "miscellaneous",
+                "itemList": [
+                    {
+                        "name": "Testing",
+                        "id": "testing",
+                        "file": "i18n/getting-started/testing"
+                    }
+                ]
+            }
+        ]
+    }
+]

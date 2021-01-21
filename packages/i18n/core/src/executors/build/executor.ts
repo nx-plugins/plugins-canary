@@ -16,49 +16,12 @@ import { logger, TargetContext } from '@nrwl/devkit';
 import * as chalk from 'chalk';
 import * as chalkTable from 'chalk-table';
 import { forEachOf } from 'async';
+import * as ora from 'ora';
 
 async function extractor(options: BuildExecutorSchema, context: TargetContext) {
   switch (options.framework) {
     case Frameworks.React: {
-      logger.info(`Project: ${context.projectName}`);
-      logger.info(`Framework: ${options.framework}`);
-
-      const depGraph = getWorkspaceGraph() as ProjectGraph;
-      const namespaces = {};
-
-      const projectDeps = getProjectDeps(depGraph, context.projectName);
-      const appTsxFiles = getNodesFiles(
-        depGraph,
-        context.projectName,
-        '.tsx',
-        '.spec'
-      );
-      const projectDepsTsxFiles = getProjectDepsFiles(
-        depGraph,
-        projectDeps,
-        '.tsx',
-        '.spec'
-      );
-      const elements2 = await extractTranslateElements(
-        [...appTsxFiles, ...projectDepsTsxFiles],
-        depGraph,
-        namespaces
-      );
-      const elementsApp = elements2
-        .filter((i) => i.type === 'app')
-        .map((i) => {
-          const { file, project, path, dependencies } = i;
-          let finalElements = [...i.elements];
-          dependencies.forEach((dep) => {
-            finalElements = [
-              ...finalElements,
-              ...elements2.find((a) => a.project === dep.target)?.elements,
-            ];
-          });
-          return { file, project, path, elements: finalElements };
-        });
-
-      const result = [];
+      const spinner = ora('Extracting messages ').start();
       const chalkOptions = {
         leftPad: 2,
         columns: [
@@ -67,7 +30,36 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
           { field: 'source', name: chalk.green('Source') },
         ],
       };
+      const namespaces = {};
       const statistics = [];
+
+      setTimeout(() => {
+        spinner.color = 'yellow';
+      }, 1000);
+
+      logger.info(`Project: ${context.projectName}`);
+      logger.info(`Framework: ${options.framework}`);
+
+      const depGraph = getWorkspaceGraph() as ProjectGraph;
+
+      const projectDeps = getProjectDeps(depGraph, context.projectName);
+      const appFiles = getNodesFiles(depGraph, context.projectName, ['.jsx', '.tsx', '.mdx'], ['.spec']);
+      const projectDepsFiles = getProjectDepsFiles(depGraph, projectDeps, ['.jsx', '.tsx', '.mdx'], ['.spec']);
+      const response = await extractTranslateElements([...appFiles, ...projectDepsFiles], depGraph, namespaces);
+      const elementsApp = response
+        .filter((i) => i.type === 'app')
+        .map((i) => {
+          const { file, project, path, dependencies } = i;
+          let finalElements = [...i.elements];
+          dependencies.forEach((dep) => {
+            finalElements = [
+              ...finalElements,
+              ...response.find((a) => a.project === dep.target)?.elements,
+            ];
+          });
+          return { file, project, path, elements: finalElements };
+        });
+
       elementsApp.forEach((i) => {
         i.elements.forEach((e) => {
           const { type, file, metadata } = e;
@@ -78,10 +70,6 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
           });
         });
       });
-      const table = chalkTable(
-        chalkOptions,
-        statistics
-      );
 
       forEachOf(
         options.locales,
@@ -90,24 +78,16 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
             const translations = getTranslations(options.directory, locale);
             elementsApp.forEach((i) => {
               if (i.elements.length > 0) {
-                const messages = manageTranslatableContent(
-                  i.elements,
-                  translations
-                );
+                const messages = manageTranslatableContent(i.elements, translations);
                 console.log(`\n ${chalk.cyan('>')} ${chalk.inverse(
                   chalk.bold(chalk.cyan(` Locale: ${locale} `))
                 )}
               ${Object.keys(translations).length > 0
-                    ? '\n Messages file founded. Updating file'
-                    : '\n No translations founded. Creating a new messages file'
+                    ? `\n Messages file founded. Updating file ${options.directory}/pages/${i.path}`
+                    : `\n No translations founded. Creating a new messages file ${options.directory}/pages/${i.path}`
                   }`);
-                writeTranslationFile(
-                  `${options.directory}/pages/${i.path}`,
-                  { ...messages },
-                  locale
-                );
-              } else {
-                console.log("\n No elements were founded");
+
+                writeTranslationFile(`${options.directory}/pages/${i.path}`, { ...messages }, locale);
               }
             });
 
@@ -115,11 +95,7 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
               if (i.elements.length > 0) {
                 const messages = manageTranslatableContent(i.elements, {});
                 console.log('\n Namespace file founded. Updating file');
-                writeTranslationFile(
-                  `${options.directory}/namespaces/${i.path}`,
-                  { ...messages },
-                  locale
-                );
+                writeTranslationFile(`${options.directory}/namespaces/${i.path}`, { ...messages }, locale);
               }
             });
           } catch (e) {
@@ -131,7 +107,7 @@ async function extractor(options: BuildExecutorSchema, context: TargetContext) {
           if (err) logger.fatal(err.message);
           logger.info(`NX I18n Statistics`);
           if (statistics.filter((s) => Object.keys(s).length !== 0).length !== 0) {
-            logger.log(table);
+            logger.log(chalkTable(chalkOptions, statistics));
             logger.fatal(`Locales were save at: ${options.directory}`);
           } else {
             logger.fatal(`Locales were not generated, please use the <TransUnit>, <Plural> in order to extract the messages`);

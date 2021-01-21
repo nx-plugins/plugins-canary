@@ -1,4 +1,5 @@
 import { readFile } from 'fs';
+import { logger } from '@nrwl/devkit';
 import { basename, extname } from 'path';
 import {
   createProjectGraph,
@@ -12,6 +13,7 @@ import { getTranslatableContent } from './shared';
 import { readNxJson } from '@nrwl/workspace/src/core/file-utils';
 import * as parser from '@babel/parser';
 import { TargetProjectLocator } from '@nrwl/workspace/src/core/target-project-locator';
+import * as mdx from "@mdx-js/mdx";
 
 export function getTranslations(directory: string, locale: string) {
   if (!fileExists(`${directory}/messages.${locale}.json`)) {
@@ -42,11 +44,11 @@ export function getProjectDeps(depGraph: ProjectGraph, project: string) {
 export function getNodesFiles(
   depGraph: ProjectGraph,
   project: string,
-  include: string,
-  exclude: string
+  include: string[],
+  exclude: string[]
 ) {
   return depGraph.nodes[project].data.files
-    .filter((i) => i.ext === include && !i.file.includes(exclude))
+    .filter((i) => include.some(incl => i.file.includes(incl)) && !exclude.some(excl => i.file.includes(excl)))
     .map((i) => ({
       ...i,
       project,
@@ -58,8 +60,8 @@ export function getNodesFiles(
 export function getProjectDepsFiles(
   depGraph: ProjectGraph,
   projectDeps: ProjectGraphDependency[],
-  include: string,
-  exclude: string
+  include: string[],
+  exclude: string[]
 ) {
   let result = [];
   projectDeps.forEach((p) => {
@@ -86,10 +88,19 @@ export function extractTranslateElements(
         const dependencies = [];
 
         const { file, project, type, path } = item;
-        readFile(item.file, 'utf8', (err, data) => {
+        readFile(item.file, 'utf8', async (err, data) => {
           if (err) return rej(err);
           try {
-            const ast = parser.parse(data, {
+            let code;
+            const isMarkdown = [".md", ".mdx"].some((v) => item.file.includes(v))
+
+            if (isMarkdown) {
+              code = await mdx(data)
+            } else {
+              code = data;
+            }
+
+            const ast = parser.parse(code, {
               sourceType: 'module',
               plugins: ['typescript', 'jsx'],
             });
@@ -112,8 +123,9 @@ export function extractTranslateElements(
                   ),
                 });
               }
-              if (i.type === 'ExportNamedDeclaration') {
-                i.declaration.body?.body.forEach((bodyItem) => {
+              if (i.type === 'ExportNamedDeclaration' || i.type === 'ExportDefaultDeclaration') {
+                console.log(`Analyzing  ${item.file}`);
+                i.declaration?.body?.body.forEach((bodyItem) => {
                   if (
                     bodyItem.argument &&
                     bodyItem.argument.type !== 'JSXText'
@@ -129,6 +141,8 @@ export function extractTranslateElements(
                 });
               }
             });
+            logger.warn(`${item.file}`);
+            logger.warn(`✓ ${elements.length} Elements`);
           } catch (e) {
             return rej(e);
           }
