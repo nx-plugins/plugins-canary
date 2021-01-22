@@ -6,11 +6,11 @@ const content = `
 We invited Hello, you are <span>Sebas </span>.
 </TransUnit>
 </p>
-`
+`;
 const transpile = async () => {
-  const jsx = await mdx(content)
-  return jsx
-}
+  const jsx = await mdx(content);
+  return jsx;
+};
 transpile().then((data) => {
   const ast = parser.parse(data, {
     sourceType: 'module',
@@ -19,4 +19,4 @@ transpile().then((data) => {
 
   console.log(JSON.stringify(data));
   console.log(JSON.stringify(ast));
-})
+});

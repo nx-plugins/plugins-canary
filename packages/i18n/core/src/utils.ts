@@ -13,11 +13,19 @@ import { getTranslatableContent } from './shared';
 import { readNxJson } from '@nrwl/workspace/src/core/file-utils';
 import * as parser from '@babel/parser';
 import { TargetProjectLocator } from '@nrwl/workspace/src/core/target-project-locator';
-import * as mdx from "@mdx-js/mdx";
+import * as mdx from '@mdx-js/mdx';
+import * as chalk from 'chalk';
+import * as chalkTable from 'chalk-table';
+import { ProjectFile } from './models/project-file.model';
+import { I18nNamespace, I18nNamespaceType } from './models/elements/namespace.model';
+import { FileElements } from './models/file-elements.model';
+import { I18nElementType } from './models/elements/element.model';
+import { BuildExecutorSchema } from './executors/build/schema';
 
-export function getTranslations(directory: string, locale: string) {
+
+export function getMessages(directory: string, locale: string): { [k: string]: any } {
   if (!fileExists(`${directory}/messages.${locale}.json`)) {
-    return {};
+    return { messages: {}, dependencies: [], file: ''};
   } else {
     try {
       return readJsonFile(`${directory}/messages.${locale}.json`);
@@ -33,11 +41,11 @@ export function getTranslationById(translations: any, id: string) {
   return translations.hasOwnProperty(id) ? translations[id] : null;
 }
 
-export function getWorkspaceGraph() {
+export function getWorkspaceGraph(): ProjectGraph {
   return onlyWorkspaceProjects(createProjectGraph());
 }
 
-export function getProjectDeps(depGraph: ProjectGraph, project: string) {
+export function getProjectDeps(depGraph: ProjectGraph, project: string): ProjectGraphDependency[] {
   return depGraph.dependencies[project];
 }
 
@@ -46,9 +54,13 @@ export function getNodesFiles(
   project: string,
   include: string[],
   exclude: string[]
-) {
+): ProjectFile[] {
   return depGraph.nodes[project].data.files
-    .filter((i) => include.some(incl => i.file.includes(incl)) && !exclude.some(excl => i.file.includes(excl)))
+    .filter(
+      (i) =>
+        include.some((incl) => i.file.includes(incl)) &&
+        !exclude.some((excl) => i.file.includes(excl))
+    )
     .map((i) => ({
       ...i,
       project,
@@ -62,7 +74,7 @@ export function getProjectDepsFiles(
   projectDeps: ProjectGraphDependency[],
   include: string[],
   exclude: string[]
-) {
+): ProjectFile[] {
   let result = [];
   projectDeps.forEach((p) => {
     result = result.concat(getNodesFiles(depGraph, p.target, include, exclude));
@@ -70,16 +82,17 @@ export function getProjectDepsFiles(
   return result;
 }
 
-export function getWorkspaceScope() {
+export function getWorkspaceScope(): string {
   const config = readNxJson();
   return config.npmScope;
 }
 
 export function extractTranslateElements(
-  files: any[],
+  files: ProjectFile[],
   depGraph: ProjectGraph,
-  namespaces
-): Promise<any> {
+  namespaces: I18nNamespace,
+  options: BuildExecutorSchema
+): Promise<FileElements[]> {
   const promises = [];
   files.forEach((item) => {
     promises.push(
@@ -92,10 +105,12 @@ export function extractTranslateElements(
           if (err) return rej(err);
           try {
             let code;
-            const isMarkdown = [".md", ".mdx"].some((v) => item.file.includes(v))
+            const isMarkdown = ['.md', '.mdx'].some((v) =>
+              item.file.includes(v)
+            );
 
             if (isMarkdown) {
-              code = await mdx(data)
+              code = await mdx(data);
             } else {
               code = data;
             }
@@ -123,8 +138,10 @@ export function extractTranslateElements(
                   ),
                 });
               }
-              if (i.type === 'ExportNamedDeclaration' || i.type === 'ExportDefaultDeclaration') {
-                console.log(`Analyzing  ${item.file}`);
+              if (
+                i.type === 'ExportNamedDeclaration' ||
+                i.type === 'ExportDefaultDeclaration'
+              ) {
                 i.declaration?.body?.body.forEach((bodyItem) => {
                   if (
                     bodyItem.argument &&
@@ -141,8 +158,10 @@ export function extractTranslateElements(
                 });
               }
             });
-            logger.warn(`${item.file}`);
-            logger.warn(`✓ ${elements.length} Elements`);
+            if(options.verbose){
+              logger.debug(`${item.file}`);
+              logger.debug(`✓ ${elements.length} Elements`);
+            }
           } catch (e) {
             return rej(e);
           }
@@ -163,10 +182,10 @@ export function extractTranslateElements(
 
 export function extractElements(
   item,
-  children,
+  children: any[],
   elements,
-  dependencies,
-  namespaces
+  dependencies: string[],
+  namespaces: I18nNamespace
 ) {
   children.forEach((itemChild) => {
     let openingElementName = itemChild.openingElement?.name.name;
@@ -195,8 +214,10 @@ export function extractElements(
       if (!namespaces[namespace] && namespace) {
         namespaces[namespace] = {
           elements: [],
-          type: 'namespace',
+          file: item.file,
+          type: I18nNamespaceType.Namespace,
           path: namespace,
+          dependencies,
         };
       }
       if (namespace) {
@@ -206,7 +227,6 @@ export function extractElements(
           type: openingElementName,
           target: extractTarget(itemChild),
           project: item.project,
-          dependencies,
         });
       } else {
         elements.push({
@@ -215,7 +235,6 @@ export function extractElements(
           type: openingElementName,
           target: extractTarget(itemChild),
           project: item.project,
-          dependencies,
         });
       }
     }
@@ -249,16 +268,15 @@ export function manageTranslatableContent(elements, translations) {
   elements.forEach((e) => {
     const previousTranslation = getTranslationById(translations, e.metadata.id);
     switch (e.type) {
-      case 'TransUnit':
-        const { metadata, file, dependencies } = e;
+      case I18nElementType.Transunit:
+        const { metadata, file } = e;
         result[e.metadata.id] = {
           metadata,
           file,
-          dependencies,
           target: previousTranslation ? previousTranslation.target : e.target,
         };
         break;
-      case 'Plural':
+      case I18nElementType.Plural:
         result[e.metadata.id] = {
           ...e,
           file: e.file.file,
@@ -288,5 +306,113 @@ export function writeTranslationFile(
   translations: any,
   locale: string
 ) {
-  writeJsonFile(`${directory}/messages.${locale}.json`, translations);
+  return new Promise<void>((res, rej) => {
+    writeJsonFile(`${directory}/messages.${locale}.json`, translations);
+    res();
+  })
+}
+
+export function getProjectsFiles(depGraph: ProjectGraph, projectDeps: ProjectGraphDependency[], projectName: string) {
+  const includeFilesExt = ['.jsx', '.tsx', '.mdx'];
+  const excludeFilesExt = ['.spec']
+  const appFiles = getNodesFiles(
+    depGraph,
+    projectName,
+    includeFilesExt,
+    excludeFilesExt
+  );
+  const projectDepsFiles = getProjectDepsFiles(
+    depGraph,
+    projectDeps,
+    includeFilesExt,
+    excludeFilesExt
+  );
+  return [...appFiles, ...projectDepsFiles]
+}
+
+export function extractElementsWithDependencies(elements: FileElements[]): FileElements[] {
+  return elements
+    .filter((i) => i.type === 'app')
+    .map((i) => {
+      const { file, project, path, dependencies, type } = i;
+      let finalElements = [...i.elements];
+      dependencies.forEach((dep) => {
+        finalElements = [
+          ...finalElements,
+          ...elements.find((a) => a.project === dep.target)?.elements,
+        ];
+      });
+      return { file, type, project, path, elements: finalElements, dependencies };
+    });
+}
+
+export function writeAppMessagesFile(elements, locales: string[], directory: string): Promise<void>[] {
+  const prom = [];
+  elements.forEach((i) => {
+    prom.push(new Promise<void>((res, rej) => {
+      const writes = [];
+      if (i.elements.length > 0) {
+        console.log(`\n ${chalk.cyan('>')} ${chalk.inverse(chalk.bold(chalk.cyan(` Source: ${i.file} `)))}`);
+
+        locales.forEach((locale) => {
+          const savedMessages = getMessages(`${directory}/pages/${i.path}`, locale).messages;
+          const messages = manageTranslatableContent(i.elements, {});
+
+          console.log(`${Object.keys(savedMessages).length > 0
+            ? `Messages file founded. Updating file ${directory}/pages/${i.path}/messages.${locale}.json`
+            : `No translations founded. Creating a new messages file ${directory}/pages/${i.path}/messages.${locale}.json`}`);
+          writes.push(writeTranslationFile(`${directory}/pages/${i.path}`, {messages: {...messages}, dependencies: i.dependencies, file: i.file }, locale));
+        });
+      }
+      Promise.all(writes).then(() => res());
+    }))
+  });
+  return prom;
+}
+
+export function writeNamespacesMessagesFile(namespaces: I18nNamespace, locales: string[], directory: string) {
+  Object.values(namespaces).forEach((i: any) => {
+    if (i.elements.length > 0) {
+      locales.forEach((locale) => {
+
+        const messages = manageTranslatableContent(i.elements, {});
+        console.log('\n Namespace file founded. Updating file');
+        writeTranslationFile(`${directory}/namespaces/${i.path}`, {messages: {...messages}, dependencies: i.dependencies, file: i.file }, locale);
+      });
+    }
+  });
+}
+
+export function generateStatistics(elements: FileElements[], directory: string) {
+  const chalkOptions = {
+    leftPad: 2,
+    columns: [
+      { field: 'id', name: chalk.cyan('ID') },
+      { field: 'type', name: chalk.magenta('Type') },
+      { field: 'source', name: chalk.green('Source') },
+    ],
+  };
+  const statistics = [];
+  elements.forEach((i) => {
+    i.elements.forEach((e) => {
+      const { type, file, metadata } = e;
+      statistics.push({
+        id: metadata.id,
+        type,
+        source: file,
+      });
+    });
+  });
+  logger.info(`NX I18n Statistics`);
+  if (
+    statistics.filter((s) => Object.keys(s).length !== 0).length !== 0
+  ) {
+    logger.log(chalkTable(chalkOptions, statistics));
+    logger.fatal(`Locales were save at: ${directory}`);
+
+  } else {
+    logger.fatal(
+      `Locales were not generated, please use the <TransUnit>, <Plural> in order to extract the messages`
+    );
+  }
 }

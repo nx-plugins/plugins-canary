@@ -1,3 +1,5 @@
 export enum Frameworks {
-  React = 'React',
+  NextJs = 'NextJs',
+  Gatsby = 'Gatsby',
+  React = 'React'
 }
